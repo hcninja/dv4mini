@@ -32,6 +32,7 @@ var (
 	debug       = false
 )
 
+// Dongle commands
 const (
 	SETADFQRG    = 0x01
 	SETADFMODE   = 0x02
@@ -43,43 +44,44 @@ const (
 	ADFSETPOWER  = 0x09
 	SETFLASHMODE = 0x0b
 	ADFDEBUG     = 0x10
-	UNKNOWN_1    = 0x11 // captured from USB with dv4mini official software
-	UNKNOWN_2    = 0x12 // captured from USB with dv4mini official software
-	UNKNOWN_3    = 0x13 // captured from USB with dv4mini official software
-	UNKNOWN_4    = 0x14 // captured from USB with dv4mini official software
+	COMMAND_11   = 0x11 // captured from USB with dv4mini official software
+	COMMAND_12   = 0x12 // captured from USB with dv4mini official software
+	COMMAND_13   = 0x13 // captured from USB with dv4mini official software
+	COMMAND_14   = 0x14 // captured from USB with dv4mini official software
 	ADFSETSEED   = 0x17
 	ADFVERSION   = 0x18
 	ADFSETTXBUF  = 0x19
 )
 
+// Dongle mode
 const (
 	MODE_DSTAR = 0x44
 	MODE_C4FM  = 0x46
 	MODE_DMR   = 0x4d
 	MODE_DPRM  = 0x4d
 	MODE_P25   = 0x4d
-	MODE_TX    = 0x54
-	MODE_RX    = 0x52
 )
 
+// TX power constants
 const (
-	POWER_MIN = iota
-	POWER_1   = iota
-	POWER_2   = iota
-	POWER_3   = iota
-	POWER_4   = iota
-	POWER_5   = iota
-	POWER_6   = iota
-	POWER_7   = iota
-	POWER_8   = iota
-	POWER_MAX = iota
+	_ = uint8(iota)
+	POWER_MIN
+	POWER_1
+	POWER_2
+	POWER_3
+	POWER_4
+	POWER_5
+	POWER_6
+	POWER_7
+	POWER_8
+	POWER_MAX
 )
 
 type DV4Mini struct {
 	Port      *serial.Port
 	RSSIMSB   uint8
 	RSSILSB   uint8
-	RSSI      string
+	RSSI      int8
 	FWVersion string
 	DongleID  string
 	// RXChan       chan bool
@@ -106,7 +108,7 @@ func Connect(device string, dbg bool) (*DV4Mini, error) {
 	// Open the port. io.ReadWriteCloser
 	d.Port, err = serial.OpenPort(&options)
 	if err != nil {
-		return d, fmt.Errorf("serial.Open: %v", err)
+		return d, fmt.Errorf("Serial device %s not found", options.Name)
 	}
 
 	return d, nil
@@ -301,14 +303,16 @@ func (d *DV4Mini) GetRXBufferData() ([]byte, error) {
 	return b, nil
 }
 
-// WriteTXBufferData writes to transmission buffer, the PTT (red light) is
+// WriteTXBufferData writes to transmission buffer, the PTT (W/ red LED) is
 // triggered automatically
 func (d *DV4Mini) WriteTXBufferData(data []byte) {
+	var packetSize int = 36
+
 	// []byte{0x04, data}
 	cmd := []byte{ADFWRITE}
 
-	for i := 0; i < len(data); i += 36 {
-		batch := data[i:min(i+36, len(data))]
+	for i := 0; i < len(data); i += packetSize {
+		batch := data[i:min(i+packetSize, len(data))]
 
 		time.Sleep(time.Millisecond * 30)
 		fullPacket := cmd
@@ -316,7 +320,8 @@ func (d *DV4Mini) WriteTXBufferData(data []byte) {
 		d.sendCmd(fullPacket)
 	}
 
-	d.FlushTXBuffer()
+	// d.FlushTXBuffer()
+	d.Port.Flush()
 }
 
 // sendCmd Sends command to the dv4mini.
@@ -365,7 +370,10 @@ An example for setting the TX and RX frequency:
 	dv.WRaw(c)
 */
 func (d *DV4Mini) WRaw(data []byte) {
-	log.Printf("\t[*] serial.write: %#v (len: %d)\n", data, len(data))
+	if debug {
+		log.Printf("\t[*] serial.write: %#v (len: %d)\n", data, len(data))
+	}
+
 	_, err := d.Port.Write(data)
 	if err != nil {
 		fmt.Println(err)
@@ -396,9 +404,15 @@ An example for getting dongle's version:
 	buff, err dv.RWRaw(c)
 	[...]
 */
-func (d *DV4Mini) RWRaw(data []byte, n int) {
-	log.Printf("\t[*] serial.write: %#v (len: %d)\n", data, len(data))
-	d.sendCmd(data)
+func (d *DV4Mini) RWRaw(data []byte) {
+	if debug {
+		log.Printf("\t[*]> serial.write: %#v (len: %d)\n", data, len(data))
+	}
+
+	_, err := d.Port.Write(data)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	// b := make([]byte, n)
 	// _, err := d.Port.Read(b)
@@ -413,7 +427,7 @@ func (d *DV4Mini) RWRaw(data []byte, n int) {
 	// log.Printf("%#v", b)
 
 	bHead := make([]byte, 6)
-	_, err := d.Port.Read(bHead)
+	_, err = d.Port.Read(bHead)
 	if err != nil {
 		log.Printf("%#v", err)
 	}
@@ -436,9 +450,21 @@ func (d *DV4Mini) RWRaw(data []byte, n int) {
 	b = append(b, bParams...)
 
 	// Flush serial buffer before receiving more data
-	d.Port.Flush()
+	// d.Port.Flush()
 
 	log.Printf("%#v", b)
+}
+
+// ReadSerial
+func (d *DV4Mini) ReadSerial(bufferSize int) ([]byte, error) {
+	b := make([]byte, bufferSize)
+
+	_, err := d.Port.Read(b)
+	if err != nil {
+		return b, err
+	}
+
+	return b, nil
 }
 
 // ===========
