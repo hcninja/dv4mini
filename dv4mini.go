@@ -42,10 +42,10 @@ const (
 	ADFGETDATA   = 0x07
 	ADFGREENLED  = 0x08
 	ADFSETPOWER  = 0x09
-	SETFLASHMODE = 0x0b
+	SETFLASHMODE = 0x0b // captured from USB with dv4mini official software
 	ADFDEBUG     = 0x10
 	COMMAND_11   = 0x11 // captured from USB with dv4mini official software
-	COMMAND_12   = 0x12 // captured from USB with dv4mini official software
+	STRFWVERSION = 0x12 // captured from USB with dv4mini official software
 	COMMAND_13   = 0x13 // captured from USB with dv4mini official software
 	COMMAND_14   = 0x14 // captured from USB with dv4mini official software
 	ADFSETSEED   = 0x17
@@ -226,9 +226,7 @@ func (d *DV4Mini) SetOperatingMode(mode byte) {
 // SetInitialSeed
 func (d *DV4Mini) SetInitialSeed() error {
 	// []byte{0x11, seed}
-	b := make([]byte, 4)
-
-	_, err := rand.Read(b)
+	b, err := GetRandBytes(4)
 	if err != nil {
 		return err
 	}
@@ -471,9 +469,46 @@ func (d *DV4Mini) ReadSerial(bufferSize int) ([]byte, error) {
 // = Helpers =
 // ===========
 
+func GetRandBytes(size int) (b []byte, err error) {
+	b = make([]byte, size)
+
+	_, err = rand.Read(b)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func min(a, b int) int {
 	if a <= b {
 		return a
 	}
 	return b
+}
+
+//TODO: G_8(x)=x^8+x^2+x+1
+func crc8() {
+	return
+}
+
+// G(x) = x^9+x^6+x^4+x^3+1
+func crc9(crc *uint16, b uint8, bits int) {
+	var v uint8 = 0x80
+	for i := 0; i < 8-bits; i++ {
+		v >>= 1
+	}
+	for i := 0; i < 8; i++ {
+		xor := (*crc)&0x0100 > 0
+		(*crc) <<= 1
+		// Limit the number of shift registers to 9.
+		*crc &= 0x01ff
+		if b&v > 0 {
+			(*crc)++
+		}
+		if xor {
+			(*crc) ^= 0x0059
+		}
+		v >>= 1
+	}
 }
