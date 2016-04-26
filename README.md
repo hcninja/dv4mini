@@ -13,23 +13,27 @@ ParityMode:      0,
 
 ## USB commands
 
-* SETADFQRG (0x01)
-* SETADFMODE (0x02)
-* FLUSHTXBUF (0x03)
-* ADFWRITE (0x04)
-* ADFWATCHDOG (0x05)
-* ADFGETDATA (0x07)
-* ADFGREENLED (0x08)
-* ADFSETPOWER (0x09)
-* ADFDEBUG (0x10)
-* ???????? (0x11)
+* SETADFQRG    (0x01)
+* SETADFMODE   (0x02)
+* FLUSHTXBUF   (0x03)
+* ADFWRITE     (0x04)
+* ADFWATCHDOG  (0x05)
+* ADFGETDATA   (0x07)
+* ADFGREENLED  (0x08)
+* ADFSETPOWER  (0x09)
+* ADFDEBUG     (0x10)
+* ????????     (0x11)
 * STRFWVERSION (0x12)
-* ???????? (0x13)
-* ???????? (0x14)
-* ADFSETSEED (0x17)
-* ADFVERSION (0x18)
-* ADFSETTXBUF (0x19)
-* SETFLASHMODE (0x0b)
+* ????????     (0x13)
+* ????????     (0x14)
+* ADFSETSEED   (0x17)
+* ADFVERSION   (0x18)
+* ADFSETTXBUF  (0x19)
+* ADFFLASHSET  (0x0b)
+* ADFFLASH0c   (0x0c)
+* ADFFLASH0d   (0x0d)
+* ADFFLASH0e   (0x0e)
+* ADFFLASH0f   (0x0f)
 
 ### SETADFQRG = 1
 
@@ -98,16 +102,6 @@ Parameters: binary data stream to be sent. MSB is sent first.
  |_preamble__|C_|S_|0_|1_|2_|3_|4_|5_|6_|7_|8_|9_|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|
 < 71 fe 39 1d 04 24 23 7f f5 9c 4e c8 d2 fc 28 eb bf f5 9c 4e c8 2e 0c 0a 22 0a e8 d0 f8 0e
 < 71 fe 39 1d 04 24 23 7d e4 64 93 86 79 79 76 22 d7 e7 41 30 84 2e 0c 0a 22 0a e8 9c f3 73
-
-== Old ==
-This command is used to send any data via 70cm transmitter.
-First switch ON the transmitter, then start sending data bytes.
-
-Example: to send a D-Star voice stream send 12 byte packets every 20ms. To send a DMR voice stream send 36 byte packets every 30ms.
-
-The data are routed through a fifo, therefore a timing jitter of up to 0,5 seconds is allowed.
-
-When you are done with sending data, switch back to RX. The transmitter will be active until all data from the fifo are sent.
 ```
 
 ### ADFWATCHDOG = 5
@@ -185,7 +179,7 @@ This is only sent from DV4mini to the host.
 It contains a variable length string with debug messages which can be printed out.
 ```
 
-### 11
+### ??? 11
 
 ```
 NFI
@@ -204,7 +198,7 @@ Returns string ADF version.
 > 71 fe 39 1d 12 07 56 30 31 2e 36 34 00
 ```
 
-### 13
+### ??? 13
 
 ```
 NFI
@@ -215,7 +209,7 @@ Is 0f the only value?
 ? 71 fe 39 1d 13 01 0f
 ```
 
-### 14
+### ??? 14
 
 ```
 NFI
@@ -266,7 +260,7 @@ Parameters:
 
 ```
 
-### SETFLASHMODE = 0b
+### ADFFLASHSET = 0b
 
 ```
 Enter into firmware flash mode
@@ -277,5 +271,25 @@ params:
 
  |_preamble__|C_|S_|0_|1_|2_|3_|4_|5_|6_|7_|8_|9_|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|
 < 71 fe 39 1d 0b 01 01
+```
+
+### ADFFLASH0c = 0c
+
+```
+```
+
+### ADFFLASH0d = 0d
+
+```
+```
+
+### ADFFLASH0e = 0e
+
+```
+```
+
+### ADFFLASH0f = 0f
+
+```
 ```
 

@@ -18,6 +18,7 @@ package dv4mini
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -34,23 +35,27 @@ var (
 
 // Dongle commands
 const (
-	SETADFQRG    = 0x01
-	SETADFMODE   = 0x02
-	FLUSHTXBUF   = 0x03
-	ADFWRITE     = 0x04
-	ADFWATCHDOG  = 0x05
-	ADFGETDATA   = 0x07
-	ADFGREENLED  = 0x08
-	ADFSETPOWER  = 0x09
-	SETFLASHMODE = 0x0b // captured from USB with dv4mini official software
-	ADFDEBUG     = 0x10
-	COMMAND_11   = 0x11 // captured from USB with dv4mini official software
-	STRFWVERSION = 0x12 // captured from USB with dv4mini official software
-	COMMAND_13   = 0x13 // captured from USB with dv4mini official software
-	COMMAND_14   = 0x14 // captured from USB with dv4mini official software
-	ADFSETSEED   = 0x17
-	ADFVERSION   = 0x18
-	ADFSETTXBUF  = 0x19
+	SETADFQRG       = 0x01
+	SETADFMODE      = 0x02
+	FLUSHTXBUF      = 0x03
+	ADFWRITE        = 0x04
+	ADFWATCHDOG     = 0x05
+	ADFGETDATA      = 0x07
+	ADFGREENLED     = 0x08
+	ADFSETPOWER     = 0x09
+	ADFFLASHMODESET = 0x0b // captured from USB with dv4mini official software
+	ADFFLASHMODE_0c = 0x0c // captured from USB with dv4mini official software
+	ADFFLASHMODE_0d = 0x0d // captured from USB with dv4mini official software
+	ADFFLASHMODE_0e = 0x0e // captured from USB with dv4mini official software
+	ADFFLASHMODE_0f = 0x0f // captured from USB with dv4mini official software
+	ADFDEBUG        = 0x10
+	COMMAND_11      = 0x11 // captured from USB with dv4mini official software
+	STRFWVERSION    = 0x12 // captured from USB with dv4mini official software
+	COMMAND_13      = 0x13 // captured from USB with dv4mini official software
+	COMMAND_14      = 0x14 // captured from USB with dv4mini official software
+	ADFSETSEED      = 0x17
+	ADFVERSION      = 0x18
+	ADFSETTXBUF     = 0x19
 )
 
 // Dongle mode
@@ -108,6 +113,7 @@ func Connect(device string, dbg bool) (*DV4Mini, error) {
 	// Open the port. io.ReadWriteCloser
 	d.Port, err = serial.OpenPort(&options)
 	if err != nil {
+		log.Println(err.Error())
 		return d, fmt.Errorf("Serial device %s not found", options.Name)
 	}
 
@@ -304,17 +310,30 @@ func (d *DV4Mini) GetRXBufferData() ([]byte, error) {
 // WriteTXBufferData writes to transmission buffer, the PTT (W/ red LED) is
 // triggered automatically
 func (d *DV4Mini) WriteTXBufferData(data []byte) {
-	var packetSize int = 36
+	var packetSize int = 34 // full 36
+	// var counter int = 0
+	// var crcValue byte
 
 	// []byte{0x04, data}
 	cmd := []byte{ADFWRITE}
 
 	for i := 0; i < len(data); i += packetSize {
+		time.Sleep(time.Millisecond * 30)
+
 		batch := data[i:min(i+packetSize, len(data))]
 
-		time.Sleep(time.Millisecond * 30)
+		// if (counter % 2) == 0 {
+		// 	batch = append([]byte{0x91}, batch...)
+		// } else {
+		// 	batch = append([]byte{0x23}, batch...)
+		// }
+
+		// counter++
+		log.Printf("[>>>] \n%s", hex.Dump(batch))
+
 		fullPacket := cmd
 		fullPacket = append(fullPacket, batch...)
+
 		d.sendCmd(fullPacket)
 	}
 
@@ -512,3 +531,22 @@ func crc9(crc *uint16, b uint8, bits int) {
 		v >>= 1
 	}
 }
+
+// func TestCRC9(t *testing.T) {
+// 	tests := map[uint16][]byte{
+// 		0x0000: []byte{},
+// 		0x0100: []byte{0x00, 0x01},
+// 		0x0179: []byte("hello world"),
+// 	}
+
+// 	for want, test := range tests {
+// 		var crc uint16
+// 		for _, b := range test {
+// 			crc9(&crc, b, 8)
+// 		}
+// 		crc9end(&crc, 8)
+// 		if crc != want {
+// 			t.Fatalf("crc9 %v failed: %#04x != %#04x", test, crc, want)
+// 		}
+// 	}
+// }
