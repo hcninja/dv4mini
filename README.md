@@ -11,6 +11,9 @@ StopBits:        1,
 ParityMode:      0,
 ```
 
+## Example
+
+
 ## USB commands
 
 * SETADFQRG    (0x01)
@@ -78,8 +81,8 @@ mode:
 < 71 fe 39 1d 02 01 44 (D-Star)
 < 71 fe 39 1d 02 01 4d (DMR)
 < 71 fe 39 1d 02 01 46 (C4FM)
-< 71 fe 39 1d 02 01 4d (P25) ???
-< 71 fe 39 1d 02 01 4d (dPRM) ???
+< 71 fe 39 1d 02 01 4d (P25)
+< 71 fe 39 1d 02 01 4d (dPRM)
 ```
 
 ### FLUSHTXBUF = 3
@@ -115,7 +118,9 @@ Command: ADFWATCHDOG
 length: 8
     Byte 0 ... RSSI MSB
     Byte 1 ... RSSI LSB
-    Bytes 2,3,4,5,6,7 ... serial number of the DV4mini stick
+    Byte 2,3,4 ADF Version
+    Byte 5,6,7 Dongle serial number
+
 Used to read the RSSI and also to check if the DV4mini is alive and connected.
 
  |_preamble__|C_|S_|0_|1_|2_|3_|4_|5_|6_|7_|8_|9_|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|
@@ -123,9 +128,9 @@ Used to read the RSSI and also to check if the DV4mini is alive and connected.
                    |                       8
  |______________|__|__|__|________|________|????
  |_preamble__|C_|S_|0_|1_|2_|3_|4_|5_|6_|7_|8_|9_|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|
-> 71 fe 39 1d 05 28 ff d1 00 01 64 58 87 a0 e8 e6 79 34 55 b5 8d 00 a3 f8 fe bc 41 60 e5 d8 07
+> 71 fe 39 1d 05 28 ff d1 00 01 64 32 54 ff e8 e6 79 34 55 b5 8d 00 a3 f8 fe bc 41 60 e5 d8 07
   b6 b0 da
-> 71 fe 39 1d 05 28 ff 9a 00 01 64 58 87 a0 24 14 3a 4c 8b 59 0e 21 ee db 27 0c 8c 4d bc da 4b
+> 71 fe 39 1d 05 28 ff 9a 00 01 64 32 54 ff 24 14 3a 4c 8b 59 0e 21 ee db 27 0c 8c 4d bc da 4b
   a8 53 cb
 ```
 

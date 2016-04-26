@@ -120,14 +120,14 @@ func Connect(device string, dbg bool) (*DV4Mini, error) {
 	return d, nil
 }
 
-// Close closes io.ReadWriteCloser
+// Close closes serial connection
 func (d *DV4Mini) Close() {
 	d.FlushTXBuffer()
 	d.Port.Flush()
 	d.Port.Close()
 }
 
-// Flush flushes all the data available in the serial buffer
+// Flush all the data available in the serial buffer
 func (d *DV4Mini) FlushSerial() error {
 	err := d.Port.Flush()
 	if err != nil {
